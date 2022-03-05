@@ -12,7 +12,7 @@ ml cuda
 
 model="facebook/bart-large"
 dataset="neuralpc"
-datafile="RawPrsn_Topic20_GE"
+datafile="Prsn2Dialog_DialogLevel"
 data_dir="/home/jennybae/data"
 sess_dir="/home/jennybae/npc_outputs"
 
