@@ -9,8 +9,6 @@ from torch.nn.utils.rnn import pad_sequence
 from transformers import AutoTokenizer
 from util.data_utils import pad_ids
 
-data_dir = '/media/disk1/jennybae/data/controllable_generation'
-
 BOS = "<s>"
 EOS = "</s>"
 PAD = "<pad>"
@@ -30,8 +28,6 @@ class NeuralPCDataset(Dataset):
     def __init__(self, args, split, tokenizer=None):
         super().__init__()
         self.args = args
-        if not self.args.data_dir:
-            self.args.data_dir = data_dir
         self.split = split
         if not tokenizer:
             self.tok = AutoTokenizer.from_pretrained(args.model_name_or_path)
@@ -88,3 +84,36 @@ class NeuralPCTestDataset(NeuralPCDataset):
                 "topic_flow": sample["topic_flow"],
                 "did": sample["id"]
             })
+
+GPT2NeuralPC_SPECIAL_TOKENS = {
+    "bos_token": "<bos>",
+    "eos_token": "<eos>",
+    "pad_token": "<pad>",
+    "sep_token": "<sep>",
+    "additional_special_tokens": [USER, SYS],
+}
+
+class NeuralPCDataset4LM(Dataset):
+    def __init__(self, args, split):
+        super().__init__()
+        self.args = args
+        self.split = split
+        self.load_data()
+
+    def load_data(self):
+        raw_df = pd.read_csv(os.path.join(self.args.data_dir,
+                                          f"{self.args.datafile_name}_{self.split}.csv"), index_col=0)
+        self.text_from = raw_df["goal"].to_list()
+        self.text_to = raw_df["dialog"].to_list()
+        assert len(self.text_from) == len(self.text_to)
+
+        if self.split != "test":
+            for i in range(1):
+                print(f"Sample {self.split} data ({i}) of goal instruction: {self.text_from[i]}")
+                print(f"Sample {self.split} data ({i}) of dialog: {self.text_to[i]}")
+
+    def __len__(self):
+        return len(self.text_to)
+
+    def __getitem__(self, idx):
+        return self.text_from[idx], self.text_to[idx]
