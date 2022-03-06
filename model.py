@@ -51,7 +51,7 @@ class GPT2NeuralPC(torch.nn.Module):
         loss = output[0]
         return loss
 
-    def generate(self, batch):
+    def generate(self, batch, top_k=0, top_p=0, num_beams=1):
         context = batch[0]
 
         input_ids = torch.LongTensor([
@@ -65,13 +65,15 @@ class GPT2NeuralPC(torch.nn.Module):
         model_output = self.model.generate(input_ids=input_ids.to(self.device),
                                            eos_token_id=self.tokenizer.eos_token_id,
                                            pad_token_id=self.tokenizer.pad_token_id,
-                                           max_length=self.args.max_target_len,
-                                           num_beams=self.args.beam_size,
+                                           num_beams=num_beams,
                                            do_sample=True,
+                                           top_k=top_k,
+                                           top_p=top_p,
+                                           max_length=self.args.max_target_len,
                                            early_stopping=True)
 
         result = self.tokenizer.decode(model_output.cpu()[0])
-        result = result.replace("<bos>", "")
+        result = result.split("<sep>", 1)[1]
 
         return result
 
